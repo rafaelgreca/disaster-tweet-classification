@@ -1,11 +1,12 @@
 import torch
-from transformers import BertConfig, get_linear_schedule_with_warmup
+import os
+from transformers import get_linear_schedule_with_warmup
 from sklearn.model_selection import StratifiedShuffleSplit
 from transformers import BertTokenizer
 from flask import Flask, request
 from src.preprocessing import preprocessing
 from src.utils import read_csv, bert_preprocessing
-from src.bert import BERT
+from src.bert import BERT, SaveBestModel
 from src.dataset import create_dataloader
 from sklearn.metrics import f1_score
 from typing import Tuple
@@ -109,10 +110,10 @@ def test(
 
 @app.route("/train", methods=["GET"])
 def train_model():
-    epochs = 20
-    batch_size = 16
+    epochs = 7
+    batch_size = 32
     max_len = 70
-    lr = 5e-5
+    lr = 2e-5
     cv = 5
 
     # reading and cleaning the dataset
@@ -156,6 +157,11 @@ def train_model():
         n_splits=cv,
         test_size=0.2
     )
+
+    # creating the model checkpoint object
+    sbm = SaveBestModel(output_dir=os.path.join(os.getcwd(), "models"))
+
+    training_output = {}
 
     for fold, (train_index, test_index) in enumerate(stratified_split.split(X, y)):
         print(f"\n---------- FOLD {fold+1} ----------")
@@ -204,7 +210,26 @@ def train_model():
                 dataloader=test_dataloader
             )
 
-            print(train_f1, train_loss)
+            # saving the best model
+            sbm(
+                current_valid_f1=test_f1,
+                current_valid_loss=test_loss,
+                current_train_f1=train_f1,
+                current_train_loss=train_loss,
+                epoch=epoch,
+                fold=fold,
+                optimizer=optimizer,
+                model=model
+            )
+        
+        training_output[f"{fold}"] = {
+            "train_f1": f"{sbm.best_train_f1}",
+            "train_loss": f"{sbm.best_train_loss}",
+            "valid_f1": f"{sbm.best_valid_f1}",
+            "valid_loss": f"{sbm.best_valid_loss}"
+        }
+        
+    return training_output
 
 if __name__ == "__main__":
     app.run(debug=True)
