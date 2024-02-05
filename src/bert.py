@@ -5,6 +5,7 @@ import os
 from transformers import BertForSequenceClassification
 from typing import Tuple, Union
 
+
 def weight_init(m: torch.nn.Module):
     """
     Initalize all the weights in the PyTorch model to be the same as Keras.
@@ -20,6 +21,7 @@ def weight_init(m: torch.nn.Module):
         nn.init.orthogonal_(m.weight_hh_l0)
         nn.init.zeros_(m.bias_ih_l0)
         nn.init.zeros_(m.bias_hh_l0)
+
 
 class SaveBestModel:
     """
@@ -80,9 +82,7 @@ class SaveBestModel:
             self.print_summary()
 
             if not fold is None:
-                path = os.path.join(
-                    self.output_dir, f"bert_fold{fold}.pth"
-                )
+                path = os.path.join(self.output_dir, f"bert_fold{fold}.pth")
             else:
                 path = os.path.join(self.output_dir, "bert.pth")
 
@@ -107,38 +107,56 @@ class SaveBestModel:
         print(f"Validation F1-Score: {self.best_valid_f1:1.6f}")
         print(f"Validation Loss: {self.best_valid_loss:1.6f}\n")
 
+
 class BERT(nn.Module):
-    def __init__(
-        self,
-        freeze: bool = False
-    ) -> None:
+    def __init__(self, freeze: bool = False) -> None:
+        """
+        The BERT model's class.
+
+        Args:
+            freeze (bool): whether freeze the BERT model's parameters or not.
+        """
         super(BERT, self).__init__()
         self.bert = BertForSequenceClassification.from_pretrained(
             "bert-base-uncased",
-            num_labels = 1,
-            output_attentions = False,
-            output_hidden_states = False
+            num_labels=1,
+            output_attentions=False,
+            output_hidden_states=False,
         )
-        
+
         if freeze:
             for param in self.bert.parameters():
                 param.requires_grad = True
-            
+
         self.bert.apply(weight_init)
-            
+
     def forward(
         self,
         input_ids: torch.Tensor,
         attention_masks: torch.Tensor,
-        target: Union[torch.Tensor, None]
+        target: Union[torch.Tensor, None],
     ) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Function responsible for model's forward step
+        (used during the training and the inference).
+
+        Args:
+            input_ids (torch.Tensor): the input ids tensor.
+            attention_masks (torch.Tensor): the attention masks tensor.
+            target (Union[torch.Tensor, None]): the target/label tensor.
+                The value must be None if we are making an inference.
+
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]: the loss and logits, respectively.
+                If we are making an inference, then we only return the logits.
+        """
         if target != None:
             output = self.bert(
                 input_ids=input_ids,
                 token_type_ids=None,
                 attention_mask=attention_masks,
                 labels=target,
-                return_dict=None
+                return_dict=None,
             )
             return output["loss"], output["logits"]
         else:
@@ -146,6 +164,6 @@ class BERT(nn.Module):
                 input_ids=input_ids,
                 token_type_ids=None,
                 attention_mask=attention_masks,
-                return_dict=None
+                return_dict=None,
             )
             return output["logits"]

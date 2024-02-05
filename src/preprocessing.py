@@ -4,42 +4,44 @@ import unidecode
 import contractions
 import wordninja
 from nltk.corpus import stopwords
+
 nltk.download("stopwords", quiet=True)
 nltk.download("punkt", quiet=True)
 sw = stopwords.words("english")
 
-def remove_emoji(
-    text: str
-) -> str:
+
+def remove_emoji(text: str) -> str:
     """
     Auxiliary remove emojis.
 
     Args:
         text (str): the text which will be cleaned.
-        
+
     Returns:
         str: the text without emojis.
     """
-    emoji_pattern = re.compile("["
-                        u"\U0001F600-\U0001F64F"  # emoticons
-                        u"\U0001F300-\U0001F5FF"  # symbols & pictographs
-                        u"\U0001F680-\U0001F6FF"  # transport & map symbols
-                        u"\U0001F1E0-\U0001F1FF"  # flags (iOS)
-                        u"\U00002702-\U000027B0"
-                        u"\U000024C2-\U0001F251"
-                        "]+", flags=re.UNICODE)
+    emoji_pattern = re.compile(
+        "["
+        "\U0001F600-\U0001F64F"  # emoticons
+        "\U0001F300-\U0001F5FF"  # symbols & pictographs
+        "\U0001F680-\U0001F6FF"  # transport & map symbols
+        "\U0001F1E0-\U0001F1FF"  # flags (iOS)
+        "\U00002702-\U000027B0"
+        "\U000024C2-\U0001F251"
+        "]+",
+        flags=re.UNICODE,
+    )
     return emoji_pattern.sub(r"", text)
-    
-def restore_hashtag(
-    text: str
-) -> str:
+
+
+def restore_hashtag(text: str) -> str:
     """
     Auxiliary function to the hashtags.
     E.g.: #sanantoniospursfan -> San Antonio Spurs fan
 
     Args:
         text (str): the text which will be restored.
-        
+
     Returns:
         str: the text with the hashtags restored.
     """
@@ -51,24 +53,22 @@ def restore_hashtag(
 
     return text
 
-def remove_newline(
-    text: str
-) -> str:
+
+def remove_newline(text: str) -> str:
     """
     Auxiliary function to remove newline characters.
 
     Args:
         text (str): the text which will be cleaned.
-        
+
     Returns:
         str: the text without newline characters.
     """
     text = re.sub(r"\\n", " ", text)
     return text
 
-def remove_usernames(
-    text: str
-) -> str:
+
+def remove_usernames(text: str) -> str:
     """
     Auxiliary function to remove usernames within the text.
 
@@ -81,9 +81,8 @@ def remove_usernames(
     text = re.sub(r"\@[^\s]+", " ", text)
     return text
 
-def format_contractions(
-    text: str
-) -> str:
+
+def format_contractions(text: str) -> str:
     """
     Auxiliary function to replace contractions with its formatted words.
 
@@ -93,13 +92,12 @@ def format_contractions(
     Returns:
         str: the text without contractions.
     """
-    text = [contractions.fix(word) for word in text.split()]   
+    text = [contractions.fix(word) for word in text.split()]
     text = " ".join(text)
     return text
 
-def remove_link(
-    text: str
-) -> str:
+
+def remove_link(text: str) -> str:
     """
     Auxiliary function to remove website links.
 
@@ -112,9 +110,8 @@ def remove_link(
     text = re.sub(r"https?://\S+|www\.\S+", " ", text)
     return text
 
-def keep_only_letters(
-    text: str
-) -> str:
+
+def keep_only_letters(text: str) -> str:
     """
     Auxiliary function to remove digits and special characters.
 
@@ -127,9 +124,8 @@ def keep_only_letters(
     text = re.sub(r"[^a-z\s]+", " ", text)
     return text
 
-def remove_single_letters(
-    text: str
-) -> str:
+
+def remove_single_letters(text: str) -> str:
     """
     Auxiliary function to remove single isolated letters.
 
@@ -142,9 +138,8 @@ def remove_single_letters(
     text = re.sub(r"\b[a-z]\b", " ", text)
     return text
 
-def remove_accent(
-    text: str
-) -> str:
+
+def remove_accent(text: str) -> str:
     """
     Auxiliary function to replace letters with accent to its version
     without the accent.
@@ -157,9 +152,8 @@ def remove_accent(
     """
     return unidecode.unidecode(text)
 
-def remove_stopwords(
-    text: str
-) -> str:
+
+def remove_stopwords(text: str) -> str:
     """
     Auxiliary function to remove stopwords from the text.
 
@@ -173,9 +167,8 @@ def remove_stopwords(
     text = " ".join(text)
     return text
 
-def remove_extra_white_spaces(
-    text: str
-) -> str:
+
+def remove_extra_white_spaces(text: str) -> str:
     """
     Auxiliary function to remove extra white spaces.
 
@@ -189,9 +182,8 @@ def remove_extra_white_spaces(
     text = text.strip()
     return text
 
-def lowercase(
-    text: str
-) -> str:
+
+def lowercase(text: str) -> str:
     """
     Auxiliary function to lowercase the text.
 
@@ -203,9 +195,8 @@ def lowercase(
     """
     return text.lower()
 
-def preprocessing(
-    text: str
-) -> str:
+
+def preprocessing(text: str) -> str:
     """
     The main function responsible for preprocessing step.
 

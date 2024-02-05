@@ -2,13 +2,14 @@ import torch
 from torch.utils.data import DataLoader, TensorDataset
 from typing import Union
 
+
 def create_dataloader(
     input_ids: torch.Tensor,
     attention_masks: torch.Tensor,
     labels: Union[torch.Tensor, None],
     batch_size: int,
     num_workers: int,
-    shuffle: bool
+    shuffle: bool,
 ) -> DataLoader:
     """
     Creates a dataloader to be used for BERT.
@@ -25,21 +26,11 @@ def create_dataloader(
         DataLoader: the dataloader created.
     """
     if labels != None:
-        dataset = TensorDataset(
-            input_ids, 
-            attention_masks,
-            labels
-        )
+        dataset = TensorDataset(input_ids, attention_masks, labels)
     else:
-        dataset = TensorDataset(
-            input_ids, 
-            attention_masks
-        )
-        
+        dataset = TensorDataset(input_ids, attention_masks)
+
     dataloader = DataLoader(
-        dataset,
-        batch_size=batch_size,
-        num_workers=num_workers,
-        shuffle=shuffle
+        dataset, batch_size=batch_size, num_workers=num_workers, shuffle=shuffle
     )
     return dataloader
