@@ -3,7 +3,7 @@ import os
 from transformers import get_linear_schedule_with_warmup
 from sklearn.model_selection import StratifiedShuffleSplit
 from transformers import BertTokenizer
-from flask import Flask, request
+from flask import Flask, jsonify, request
 from src.preprocessing import preprocessing
 from src.utils import read_csv, bert_preprocessing
 from src.bert import BERT, SaveBestModel
@@ -11,6 +11,12 @@ from src.dataset import create_dataloader
 from sklearn.metrics import f1_score
 from typing import Tuple
 
+# defining global variables
+epochs = 7
+batch_size = 32
+max_len = 70
+lr = 2e-5
+cv = 5
 app = Flask(__name__)
 
 def train(
@@ -24,7 +30,7 @@ def train(
     Function responsible for the training step.
     
     Args:
-        device (torch.device): the device (cpu or cuda).
+        device (torch.device): the torch device (cpu or cuda).
         dataloader (torch.utils.data.DataLoader): the training dataloader.
         optimizer (torch.nn.optim): the optimizer that will be used.
         model (torch.nn.Module): the Bert model.
@@ -71,11 +77,11 @@ def test(
     dataloader: torch.utils.data.DataLoader
 ):
     """
-    Function responsible for the test step.
+    Function responsible for the test/validation step.
     
     Args:
-        device (torch.device): the device (cpu or cuda).
-        validation_loader (torch.utils.data.DataLoader): the validation dataloader.
+        device (torch.device): the torch device (cpu or cuda).
+        dataloader (torch.utils.data.DataLoader): the validation dataloader.
         model (torch.nn.Module): the Bert model.
     
     Returns:
@@ -108,14 +114,101 @@ def test(
     test_f1 /= len(dataloader)
     return test_f1, test_loss
 
+def inference(
+    model: torch.nn.Module,
+    device: torch.device,
+    dataloader: torch.utils.data.DataLoader
+):
+    """
+    Function responsible for the inference step.
+    
+    Args:
+        device (torch.device): the torch device (cpu or cuda).
+        dataloader (torch.utils.data.DataLoader): the test dataloader.
+        model (torch.nn.Module): the Bert model.
+    
+    Returns:
+        torch.Tensor: the prediction.
+    """
+    model.eval()
+    predictions = []
+    
+    with torch.inference_mode():
+        for batch in dataloader:
+            input_id, attention_mask = batch
+            input_id, attention_mask = input_id.to(device), attention_mask.to(device)
+
+            logits = model(input_id, attention_mask, None)
+            
+            prediction = torch.argmax(logits, axis=1).flatten()
+            prediction = (logits > 0.5) * 1.
+            prediction = prediction.flatten()
+            prediction = prediction.to(dtype=torch.int)
+
+            if prediction.get_device() != "cpu":
+                prediction = prediction.cpu()
+
+            predictions.extend(prediction.detach().numpy().tolist())
+        
+    return predictions
+
+@app.route("/inference", methods=["POST"])
+def inference_model():
+    data = request.json
+    model_name = data["model_name"]
+
+    # reading and cleaning the dataset
+    test_df = read_csv("./data/test.csv")
+    test_df = test_df.drop(columns=["keyword", "location"])
+    test_df["cleaned_text"] = test_df["text"].apply(preprocessing)
+    
+    # creating the Bert Tokenizer
+    tokenizer = BertTokenizer.from_pretrained(
+        "bert-base-uncased",
+        do_lower_case=True
+    )
+    
+    # preprocessing the texts to be exactly as Bert needs
+    input_ids, att_masks = bert_preprocessing(
+        texts=test_df["cleaned_text"].values.tolist(),
+        max_len=max_len,
+        tokenizer=tokenizer
+    )
+
+    # creating the model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = BERT().to(device)
+
+    # loading the trained model parameters
+    model.load_state_dict(
+        torch.load(
+            os.path.join(os.getcwd(), "models", f"{model_name}.pth")
+        )["model_state_dict"]
+    )
+
+    # creating the dataloader
+    test_dataloader = create_dataloader(
+        input_ids=input_ids,
+        attention_masks=att_masks,
+        labels=None,
+        batch_size=batch_size,
+        num_workers=0,
+        shuffle=False
+    )
+
+    prediciton = inference(
+        model=model,
+        device=device,
+        dataloader=test_dataloader
+    )
+
+    test_df["prediction"] = prediciton
+    inferece_output = test_df.to_json(orient="records")
+
+    return jsonify(inferece_output)
+
 @app.route("/train", methods=["GET"])
 def train_model():
-    epochs = 7
-    batch_size = 32
-    max_len = 70
-    lr = 2e-5
-    cv = 5
-
     # reading and cleaning the dataset
     train_df = read_csv("./data/train.csv")
     train_df = train_df.drop_duplicates(subset=["id"], keep=False)
@@ -229,7 +322,7 @@ def train_model():
             "valid_loss": f"{sbm.best_valid_loss}"
         }
         
-    return training_output
+    return jsonify(training_output)
 
 if __name__ == "__main__":
     app.run(debug=True)

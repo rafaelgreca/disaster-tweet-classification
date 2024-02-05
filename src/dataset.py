@@ -1,11 +1,11 @@
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-from typing import List
+from typing import Union
 
 def create_dataloader(
     input_ids: torch.Tensor,
     attention_masks: torch.Tensor,
-    labels: torch.Tensor,
+    labels: Union[torch.Tensor, None],
     batch_size: int,
     num_workers: int,
     shuffle: bool
@@ -24,11 +24,18 @@ def create_dataloader(
     Returns:
         DataLoader: the dataloader created.
     """
-    dataset = TensorDataset(
-        input_ids, 
-        attention_masks,
-        labels
-    )
+    if labels != None:
+        dataset = TensorDataset(
+            input_ids, 
+            attention_masks,
+            labels
+        )
+    else:
+        dataset = TensorDataset(
+            input_ids, 
+            attention_masks
+        )
+        
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,

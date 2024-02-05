@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 import os
 from transformers import BertForSequenceClassification
-from typing import Tuple
+from typing import Tuple, Union
 
 def weight_init(m: torch.nn.Module):
     """
@@ -130,13 +130,22 @@ class BERT(nn.Module):
         self,
         input_ids: torch.Tensor,
         attention_masks: torch.Tensor,
-        target: torch.Tensor
+        target: Union[torch.Tensor, None]
     ) -> Tuple[torch.Tensor, torch.Tensor]:
-        output = self.bert(
-            input_ids=input_ids,
-            token_type_ids=None,
-            attention_mask=attention_masks,
-            labels=target,
-            return_dict=None
-        )
-        return output["loss"], output["logits"]
+        if target != None:
+            output = self.bert(
+                input_ids=input_ids,
+                token_type_ids=None,
+                attention_mask=attention_masks,
+                labels=target,
+                return_dict=None
+            )
+            return output["loss"], output["logits"]
+        else:
+            output = self.bert(
+                input_ids=input_ids,
+                token_type_ids=None,
+                attention_mask=attention_masks,
+                return_dict=None
+            )
+            return output["logits"]
