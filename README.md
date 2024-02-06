@@ -1,6 +1,6 @@
 # Disaster Tweet Classification
 
-This project aims to create a Deep Learning model designed to tackle [Natural Language Processing with Disaster Tweets](https://www.kaggle.com/competitions/nlp-getting-started/code?competitionId=17777) competition proposed by Kaggle. However, it's not focused on training and evaluating different algorithms to see which has a better performance on Kaggle's ranking, but rather on building an application using Flask and Docker to use the training dataset to build and train a BERT model and then use it to make predictions on the test dataset.
+This project aims to create a Deep Learning model designed to tackle [Natural Language Processing with Disaster Tweets](https://www.kaggle.com/competitions/nlp-getting-starte/overview) competition proposed by Kaggle. However, it's not focused on training and evaluating different algorithms to see which has a better performance on Kaggle's ranking, but rather on building an application using Flask and Docker to use the training dataset to build and train a BERT model and then use it to make predictions on the test dataset.
 
 ## Table of Contents
 
@@ -30,7 +30,7 @@ pip install -r requirements.txt
 
 ### Download the Dataset
 
-Before continuing, to the code work properly you need to download the dataset correctly. If you install using other sources, the code might not work. Download the dataset using [Kaggle's link](https://www.kaggle.com/competitions/nlp-getting-started/code?competitionId=17777). After downloading it, create a `data` folder **on the root** and put the `train.csv` and `test.csv` files inside of it.
+Before continuing, to the code work properly you need to download the dataset correctly. If you install using other sources, the code might not work. Download the dataset using [Kaggle's link](https://www.kaggle.com/competitions/nlp-getting-start/overview). After downloading it, create a `data` folder **on the root** and put the `train.csv` and `test.csv` files inside of it.
 
 ### Directory Structure
 
