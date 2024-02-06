@@ -124,7 +124,7 @@ curl -X POST http://127.0.0.1:8000/inference -H \
 -d '{"model_name": "bert_fold0"}'
 ```
 
-A small example of what the API will return after the inference:
+A small sample of what the API will return after the inference:
 
 ```json
 [
